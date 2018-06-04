@@ -137,6 +137,31 @@ def minhash(file_dir="news_data", threshold=0.75, permutations=128):
     return duplicates
 
 
+def lsh_minhash(file_dir="news_data", threshold=0.75, permutations=128):
+    """Deduplicate by creating the minhash approximation of a jaccard score.
+
+    3rd party libraries:
+        https://ekzhu.github.io/datasketch/lsh.html
+
+    For full run on local machine:
+        Number of jaccard duplicates with threshold 0.75 = 4359
+        time taken to complete = 0:00:08.718388
+
+    Redis implementation:
+
+
+    :param file_dir: Location of all documents.
+    :type file_dir: str
+    :param threshold: Threshold above which we consider two documents duplicates
+    :type threshold: float
+    :param permutations: Number of permutations to use for the minhash
+    :type permutations: int
+    :return: The minhash duplicates
+    :rtype: list of floats
+    """
+    pass
+
+
 if __name__ == '__main__':
     # jaccard(max_docs=500)
     minhash(file_dir="news_data")
@@ -153,3 +178,4 @@ if __name__ == '__main__':
 # single new article
 # find articles talking about similar event (TFIDF?)
 # show strings of duplicates.  4300 dupes > 2800 documents, so there must be multiple duplicates.
+# tests
