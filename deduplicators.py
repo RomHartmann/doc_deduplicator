@@ -50,7 +50,7 @@ def parse_data(file_dir="news_data", max_docs=None):
 
 
 def time_func(func):
-    """A decorator to get a timed execution."""
+    """A decorator to get the execution time."""
     def timed(*args, **kw):
         begin = datetime.datetime.now()
         result = func(*args, **kw)
@@ -62,7 +62,7 @@ def time_func(func):
 
 
 @time_func
-def jaccard(file_dir="news_data", jaccard_threshold=0.75):
+def jaccard(file_dir="news_data", jaccard_threshold=0.75, max_docs=None):
     """Deduplicate the documents by doing a jaccard similarity score.
 
     NOTE:  This takes waaay too long.  Not scalable, since we do O(n^2)
@@ -75,11 +75,13 @@ def jaccard(file_dir="news_data", jaccard_threshold=0.75):
     :type file_dir: str
     :param jaccard_threshold: Above this jaccard threshold we consider two documents as duplicates.
     :type jaccard_threshold: float
+    :param max_docs: limit the number of docs to read for testing puposes.  None for all docs.
+    :type max_docs: None or int
     :return: Each tuple is of form (doc_a_id, doc_b_id, jaccard_score)
     :rtype: list of tuples
     """
     doc_ngrams = []
-    for doc in parse_data(file_dir, max_docs=None):
+    for doc in parse_data(file_dir, max_docs=max_docs):
         doc_ngrams.append((doc["filename"], algos.create_ngrams(doc["content"])))
 
     duplicates = []
@@ -112,8 +114,8 @@ def minhash(file_dir="news_data", threshold=0.75, permutations=128):
     :type threshold: float
     :param permutations: Number of permutations to use for the minhash
     :type permutations: int
-    :return:
-    :rtype:
+    :return: The minhash duplicates
+    :rtype: list of floats
     """
     minhashes = []
     for doc in parse_data(file_dir):
@@ -136,8 +138,8 @@ def minhash(file_dir="news_data", threshold=0.75, permutations=128):
 
 
 if __name__ == '__main__':
-    jaccard()
-    # minhash(file_dir="news_data")
+    # jaccard(max_docs=500)
+    minhash(file_dir="news_data")
 
 # TODO
 # write description
@@ -150,3 +152,4 @@ if __name__ == '__main__':
 # batch
 # single new article
 # find articles talking about similar event (TFIDF?)
+# show strings of duplicates.  4300 dupes > 2800 documents, so there must be multiple duplicates.

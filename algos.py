@@ -37,28 +37,3 @@ def jaccard(set_a, set_b):
     union = set_a.union(set_b)
     sim = 0 if len(union) == 0 else len(intersection) / len(union)
     return sim
-
-
-def candidate_duplicates(document_feed, char_ngram=5, seeds=100, bands=5, hashbytes=4):
-    hasher = minhash.MinHasher(seeds=seeds, char_ngram=char_ngram, hashbytes=hashbytes)
-    if seeds % bands != 0:
-        raise ValueError('Seeds has to be a multiple of bands. {} % {} != 0'.format(seeds, bands))
-
-    lshcache = cache.Cache(num_bands=bands, hasher=hasher)
-    for i_line, line in enumerate(document_feed):
-        line = line.decode('utf8')
-        docid, headline_text = line.split('\t', 1)
-        fingerprint = hasher.fingerprint(headline_text.encode('utf8'))
-
-        # in addition to storing the fingerpring store the line
-        # number and document ID to help analysis later on
-        lshcache.add_fingerprint(fingerprint, doc_id=(i_line, docid))
-
-    candidate_pairs = set()
-    for b in lshcache.bins:
-        for bucket_id in b:
-            if len(b[bucket_id]) > 1:
-                pairs_ = set(itertools.combinations(b[bucket_id], r=2))
-                candidate_pairs.update(pairs_)
-
-    return candidate_pairs
