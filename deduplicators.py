@@ -67,10 +67,6 @@ def jaccard(file_dir="news_data", jaccard_threshold=0.75, max_docs=None):
 
     NOTE:  This takes waaay too long.  Not scalable, since we do O(n^2)
 
-    For full run on local machine:
-        Number of jaccard duplicates with threshold 0.75 = 4326
-        time taken to complete = 0:01:28.998940
-
     :param file_dir: Where to find all the documents.
     :type file_dir: str
     :param jaccard_threshold: Above this jaccard threshold we consider two documents as duplicates.
@@ -103,10 +99,6 @@ def minhash(file_dir="news_data", threshold=0.75, permutations=128):
 
     3rd party libraries:
         https://ekzhu.github.io/datasketch/minhash.html
-
-    For full run on local machine:
-        Number of jaccard duplicates with threshold 0.75 = 4359
-        time taken to complete = 0:00:08.718388
 
     :param file_dir: Location of all documents.
     :type file_dir: str
@@ -143,10 +135,6 @@ def lsh_minhash(file_dir="news_data", threshold=0.75, permutations=128):
     3rd party libraries:
         https://ekzhu.github.io/datasketch/lsh.html
 
-    For full run on local machine:
-        Number of jaccard duplicates with threshold 0.75 = 4359
-        time taken to complete = 0:00:08.718388
-
     Redis implementation:
 
 
@@ -167,15 +155,9 @@ if __name__ == '__main__':
     minhash(file_dir="news_data")
 
 # TODO
-# write description
-#   1) the trade-offs you make,
-#   2) the runtime of your solution,
-#   3) it’s scalability,
-#   4) limitations and future improvements
 # a) title, b) body and c) url
 # log out duplicates with filename and doc_id etc.
 # batch
 # single new article
 # find articles talking about similar event (TFIDF?)
 # show strings of duplicates.  4300 dupes > 2800 documents, so there must be multiple duplicates.
-# tests
