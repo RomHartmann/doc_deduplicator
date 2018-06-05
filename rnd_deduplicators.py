@@ -34,6 +34,7 @@ def jaccard_dedupe(data_dir="news_data", jaccard_threshold=0.75, max_docs=None):
     for doc in common_tools.parse_data(data_dir, max_docs=max_docs):
         doc_ngrams.append((doc["filename"], common_tools.create_ngrams(doc["content"])))
 
+    # TODO test optimisation on two dimensions (length of ngram), (word vs character ngram)
     duplicates = []
     for i_doc in range(len(doc_ngrams)):
         for j_doc in range(i_doc + 1, len(doc_ngrams)):
@@ -90,10 +91,3 @@ def minhash_dedupe(data_dir="news_data", threshold=0.75, permutations=128):
 if __name__ == '__main__':
     # jaccard_dedupe(max_docs=500)
     minhash_dedupe()
-
-# TODO
-# TEST the duplicates (create visual verification platform)
-# log out duplicates with filename and doc_id etc.
-
-# TODO:
-# - research into better understanding MinHash and LSH

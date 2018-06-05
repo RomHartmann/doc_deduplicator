@@ -3,4 +3,3 @@ news_data/*
 *.pyc
 lsh_model.pkl
 *.pkl
-duplicates.json.nl

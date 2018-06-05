@@ -47,10 +47,21 @@ LSH minhash with Redis storage layer:
 It is important to note that the last one are unique duplicate sets.  
 The first two are total number of duplicates, which includes the net of duplicates.
 
+#### Results
+
+I have not undergone a detailed analysis of the performance of the deduplication beyond
+a simple "look at it on screen and make sure its not broken".
+I'm fairly sure that a lot more can be squeezed out with simple optimisations, like playing
+with the threshold value.
+
+A simple newline delimited json file (`duplicates.json.nl`) in included in this project.
+
+To get your own results, the program can be run as outlined in the "Implentation" section below.
+
 #### Scalability
 
-Given the redis layer we can have multiple machines working in parallel, and once
-they close their write stream can calculate the duplicates for the docs in their memory.
+Given the redis layer, we can have multiple machines working in parallel, and once
+they close their write stream can calculate the duplicates for the docs in their system.
 
 
 #### Limitations and future improvements
@@ -58,9 +69,10 @@ they close their write stream can calculate the duplicates for the docs in their
 Limitations:
 
 1)  Without some sort of (probably manual) checking, the accuracy is not clear.
-2)  while this centralized Redis + pickle file implementation opens up the possiblity
+2)  While this centralized Redis + pickle file implementation opens up the possiblity
 to run this algorithm in a MapReduce manner, some more pipelining is required to make
-that elegant.
+that happen.  I would try to use pyspark to run this, simply because it is such an elegant
+MapReduce implementation.
 
 
 Things to do to make production ready:

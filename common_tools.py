@@ -112,7 +112,6 @@ def create_ngrams(text, word_ngram=3):
     :return: A set of word ngrams
     :rtype: set
     """
-    # TODO test optimisation on two dimensions (length of ngram), (word vs character ngram)
     words = text.lower().split()
     ngrams = [words[pos:pos + word_ngram] for pos in range(0, len(words) - word_ngram)]
     ngrams_set = set([' '.join(g) for g in ngrams])
