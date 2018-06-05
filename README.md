@@ -20,6 +20,25 @@ sometime in the future.  The R&D code is in `rnd_deduplicators.py`
 The scalable deduplicator lives in `minhash_lsh_dedupe.py`, and relied heavily on 
 a third party library ([datasketch](https://ekzhu.github.io/datasketch/index.html))
 
+#### Analysis of problem
+
+The simplistic approach to identifying duplication between two pieces of text is
+to do a jaccard index between the its ngram sets.  For larger texts, such as a news article,
+it _should_ be sufficient to do word-ngrams instead of character ngrams.
+
+The problem with this approach is that we need to calculate each document against
+each other document, and so (without repetition) we have O(n^2/2) complexity.
+
+To trade for more speed, we substitute the exact jaccard distance for an approximation,
+and assume that when the data gets bigger the error gets smaller.  The way minhash does
+this is by using a hashing algorithm where hashing similar values has the
+same probability to clash as jaccard (by minimizing the hash algo number for each hashed set)
+
+This however, still does not scale horizontally, so we introduce LSH, where we
+hash our sets into buckets.  Though at this point I decided to stop rummaging around
+the rabbit hole and start writing code, so I'm not totally clear on the maths for this.
+Luckily I found a library to abstract the grimy details and got on with coding.
+
 #### The trade-offs
 
 As far as I understand, minhash is always going to be an approximation of jaccard.  
@@ -62,6 +81,10 @@ To get your own results, the program can be run as outlined in the "Implentation
 
 Given the redis layer, we can have multiple machines working in parallel, and once
 they close their write stream can calculate the duplicates for the docs in their system.
+
+It should also be noted that this implementation does not require infinite memory as is,
+since the data are loaded up via a generator and huge data can be split up and hashed in
+parallel.  After a parallel hashing step calculating duplicates is much faster.
 
 
 #### Limitations and future improvements
