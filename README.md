@@ -30,8 +30,8 @@ Jaccard:
 - time taken to complete = 0:01:28.998940
 
 MinHash:
-- Number of jaccard duplicates with threshold 0.75 = 4359
-- time taken to complete = 0:00:08.718388
+- Number of jaccard duplicates with threshold 0.75 = 6202
+- time taken to complete = 0:00:13.451395
 
 LSH minhash with Redis storage layer:
 - Number of jaccard duplicates with threshold 0.75 =
@@ -55,6 +55,9 @@ Things to do to make production ready:
 4)  Create a streaming API for single/groups of new documents that uses + updates existing Redis layer
 5)  Use multiple dimensions: use Title, URL, date of release etc.
 6)  Extract or enrich the document to gain the subject/topic of the article to link related articles.
+7)  If the data size increased dramatically, we could first write all minhashes to redis MapReduce style.
+
+
 
 ### Implementation
 
@@ -66,4 +69,24 @@ Things to do to make production ready:
 #### Setting up local Redis
 
 We want a redis server on localhost to act as a storage layer for the hashed docs.
+[(From Digital Ocean)](https://www.digitalocean.com/community/tutorials/how-to-install-and-use-redis)
 
+1) `cd` to some directory and download + install.
+```
+wget http://download.redis.io/redis-stable.tar.gz
+tar xvzf redis-stable.tar.gz
+cd redis-stable
+make
+make test
+sudo make install
+```
+2)  Start server on localhost:  `redis-server`
+
+Or, configure it to run as daemon:
+```
+cd utils
+sudo ./install_server.sh
+
+sudo service redis_6379 start
+sudo service redis_6379 stop
+```
