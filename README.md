@@ -41,7 +41,7 @@ MinHash:
 
 LSH minhash with Redis storage layer:
 - Number of jaccard duplicates with threshold 0.75 = 901
-- time taken to complete = 0:00:10.130252
+- time taken to complete = 0:00:09.629650
 
 It is important to note that the last one are unique duplicate sets.  
 The first two are total number of duplicates, which includes the net of duplicates.
@@ -67,10 +67,15 @@ Things to do to make production ready:
 1)  Host Redis somewhere
 2)  Unit tests
 3)  Logging location
-4)  Create a streaming API for single/groups of new documents that uses + updates existing Redis layer
+4)  Create a streaming API for single/groups of new documents that uses + updates existing Redis layer.
+Currently it is set up so that it just reads all documents from the `news_data` folder (configurable), 
+so everything is batch.  An API would really make this thing nicer.
 5)  Use multiple dimensions: use Title, URL, date of release etc.
 6)  Extract or enrich the document to gain the subject/topic of the article to link related articles.
 7)  Put the pickle file in a stored location so that it is available everywhere.
+8)  Displaying duplicate content can definitely be made better
+9)  Test a good threshold value.  0.75 was arbitraraly chosen.
+10)  Profile script to find inefficiencies and bottlenecks
 
 ### Implementation
 
@@ -93,6 +98,9 @@ Else we can load that model and find duplicates against it
 ```
 python minhash_lsh_dedupe.py load
 ```
+
+To display some text from the duplicate documents in terminal, add the `--display_dupes` flag.
+eg `python minhash_lsh_dedupe.py new --display_dupes`
 
 More info can be found by running `python minhash_lsh_dedupe.py --help`
 

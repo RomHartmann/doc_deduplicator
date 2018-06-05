@@ -16,13 +16,13 @@ logger = logging.getLogger(__name__)
 
 
 @common_tools.time_func
-def jaccard_dedupe(file_dir="news_data", jaccard_threshold=0.75, max_docs=None):
+def jaccard_dedupe(data_dir="news_data", jaccard_threshold=0.75, max_docs=None):
     """Deduplicate the documents by doing a jaccard similarity score.
 
     NOTE:  This takes waaay too long.  Not scalable, since we do O(n^2)
 
-    :param file_dir: Where to find all the documents.
-    :type file_dir: str
+    :param data_dir: Where to find all the documents.
+    :type data_dir: str
     :param jaccard_threshold: Above this jaccard threshold we consider two documents as duplicates.
     :type jaccard_threshold: float
     :param max_docs: limit the number of docs to read for testing puposes.  None for all docs.
@@ -31,7 +31,7 @@ def jaccard_dedupe(file_dir="news_data", jaccard_threshold=0.75, max_docs=None):
     :rtype: list of tuples
     """
     doc_ngrams = []
-    for doc in common_tools.parse_data(file_dir, max_docs=max_docs):
+    for doc in common_tools.parse_data(data_dir, max_docs=max_docs):
         doc_ngrams.append((doc["filename"], common_tools.create_ngrams(doc["content"])))
 
     duplicates = []
@@ -49,14 +49,14 @@ def jaccard_dedupe(file_dir="news_data", jaccard_threshold=0.75, max_docs=None):
 
 
 @common_tools.time_func
-def minhash_dedupe(file_dir="news_data", threshold=0.75, permutations=128):
+def minhash_dedupe(data_dir="news_data", threshold=0.75, permutations=128):
     """Deduplicate by creating the minhash approximation of a jaccard score.
 
     3rd party libraries:
         https://ekzhu.github.io/datasketch/minhash.html
 
-    :param file_dir: Location of all documents.
-    :type file_dir: str
+    :param data_dir: Location of all documents.
+    :type data_dir: str
     :param threshold: Threshold above which we consider two documents duplicates
     :type threshold: float
     :param permutations: Number of permutations to use for the minhash
@@ -65,7 +65,7 @@ def minhash_dedupe(file_dir="news_data", threshold=0.75, permutations=128):
     :rtype: list of floats
     """
     minhashes = []
-    for doc in common_tools.parse_data(file_dir):
+    for doc in common_tools.parse_data(data_dir):
         mh = datasketch.MinHash(num_perm=permutations)
         words = [s.encode('utf-8') for s in doc["content"].split()]
         for word in words:
@@ -93,12 +93,7 @@ if __name__ == '__main__':
 
 # TODO
 # TEST the duplicates (create visual verification platform)
-# a) title, b) body and c) url
 # log out duplicates with filename and doc_id etc.
-# batch
-# single new article
-# find articles talking about similar event (TFIDF?)
-# show strings of duplicates.  4300 dupes > 2800 documents, so there must be multiple duplicates.
 
 # TODO:
 # - research into better understanding MinHash and LSH

@@ -53,6 +53,53 @@ class LshDeduper(object):
         store.flushdb()
         return self
 
+    def build_lsh(self, permutations=128):
+        """Buld the LSH object up by injecting the minhashes into it.
+
+        :param permutations: Number of permutations to use for minhashing.
+        :type permutations: int
+        :return: Returning self so that we can chain commands together.
+        :rtype: LshDeduper
+        """
+        logger.info("Building minhashes...")
+        for doc in common_tools.parse_data(self.data_dir):
+            mh = datasketch.MinHash(num_perm=permutations)
+            word_set = set([s.encode('utf-8') for s in doc["content"].split()])
+            for word in word_set:
+                mh.update(word)
+            self.minhashes.append((doc["filename"], mh))
+
+        if not self.lsh:
+            raise Exception("Please first 'create_lsh' or 'load_lsh'")
+
+        logger.debug("Inserting minhashes into lsh")
+        with self.lsh.insertion_session() as session:
+            for key, minhash in self.minhashes:
+                session.insert(key, minhash)
+
+        return self
+
+    def calculate_duplicates(self):
+        """Deduplicate by creating the minhash approximation of a jaccard score.
+
+        :return: The minhash duplicates
+        :rtype: list of floats
+        """
+        logger.debug("Calculating duplicates...")
+        if not self.minhashes:
+            self.build_lsh()
+
+        duplicates = []
+        for key, minhash in self.minhashes:
+            result = self.lsh.query(minhash)
+            dup = set(result) - {key}
+            if dup:
+                duplicates.append((key, list(dup)))
+
+        logger.info("Number of minhash duplicates = {}".format(len(duplicates)))
+
+        return duplicates
+
     def create_lsh(self, threshold=0.75):
         """Creates the LSH object into which the hashes are stored.
 
@@ -70,28 +117,6 @@ class LshDeduper(object):
                 'redis': {'host': self.redis_host, 'port': self.redis_port}
             }
         )
-        return self
-
-    def build_lsh(self, permutations=128):
-        """Buld the LSH object up by injecting the minhashes into it.
-
-        :param permutations: Number of permutations to use for minhashing.
-        :type permutations: int
-        :return: Returning self so that we can chain commands together.
-        :rtype: LshDeduper
-        """
-        logger.info("Building minhashes")
-        for doc in common_tools.parse_data(self.data_dir):
-            mh = datasketch.MinHash(num_perm=permutations)
-            word_set = set([s.encode('utf-8') for s in doc["content"].split()])
-            for word in word_set:
-                mh.update(word)
-            self.minhashes.append((doc["document_id"], mh))
-
-        with self.lsh.insertion_session() as session:
-            for key, minhash in self.minhashes:
-                session.insert(key, minhash)
-
         return self
 
     def store_lsh(self, model_location="lsh_model.pkl"):
@@ -129,24 +154,6 @@ class LshDeduper(object):
             self.lsh = pickle.load(f_lsh)
         return self
 
-    def calculate_duplicates(self):
-        """Deduplicate by creating the minhash approximation of a jaccard score.
-
-        :return: The minhash duplicates
-        :rtype: list of floats
-        """
-        logger.debug("Calculating duplicates")
-        duplicates = []
-        for key, minhash in self.minhashes:
-            result = self.lsh.query(minhash)
-            dup = set(result) - {key}
-            if dup:
-                duplicates.append((key, list(dup)))
-
-        logger.info("Number of minhash duplicates = {}".format(len(duplicates)))
-
-        return duplicates
-
 
 if __name__ == '__main__':
     begin = datetime.datetime.now()
@@ -160,6 +167,16 @@ if __name__ == '__main__':
         '--model_path', help="That path where to save the LSH model.  Default = 'lsh_model.pkl'",
         default="lsh_model.pkl"
     )
+    parser.add_argument(
+        '--display_dupes', help="Include this flag if we want to display duplicate content.",
+        default=False,
+        action="store_true"
+    )
+    parser.add_argument(
+        '--save_dupes', help="Include this flag if we want to save duplicate content.",
+        default=False,
+        action="store_true"
+    )
     args = parser.parse_args()
 
     model_path = args.model_path
@@ -167,12 +184,20 @@ if __name__ == '__main__':
     if args.mode == "new":
         # To build the model and store it into redis
         deduper = LshDeduper()
-        dupes = deduper.clear_redis_db().create_lsh().build_lsh().calculate_duplicates()
+        dupes = deduper.clear_redis_db().create_lsh().calculate_duplicates()
         deduper.store_lsh(model_path)
     elif args.mode == "load":
         # To load the model from redis
         deduper = LshDeduper()
-        dupes = deduper.load_lsh(model_path).build_lsh().calculate_duplicates()
+        dupes = deduper.load_lsh(model_path).calculate_duplicates()
+    else:
+        raise Exception("Choose between 'new' and 'load' for mode.")
 
     elapsed = datetime.datetime.now() - begin
     logger.debug("time taken to complete = {}".format(elapsed))
+
+    if args.display_dupes:
+        common_tools.display_duplicate_content(dupes)
+
+    if args.save_dupes:
+        common_tools.save_duplicate_filenames(dupes)
