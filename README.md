@@ -36,12 +36,13 @@ Jaccard:
 - time taken to complete = 0:01:28.998940
 
 MinHash:
-- Number of jaccard duplicates with threshold 0.75 = 6202
+- Number of minhash duplicates with threshold 0.75 = 6202
 - time taken to complete = 0:00:13.451395
 
 LSH minhash with Redis storage layer:
-- Number of jaccard duplicates with threshold 0.75 = 901
-- time taken to complete = 0:00:09.629650
+- Number of unique lsh duplicate docs with threshold 0.75 = 901
+- time taken to complete (new) = 0:00:09.629650
+- time taken to complete (load) = 0:00:08.561414
 
 It is important to note that the last one are unique duplicate sets.  
 The first two are total number of duplicates, which includes the net of duplicates.
@@ -101,6 +102,9 @@ python minhash_lsh_dedupe.py load
 
 To display some text from the duplicate documents in terminal, add the `--display_dupes` flag.
 eg `python minhash_lsh_dedupe.py new --display_dupes`
+
+To save the duplicate documents to a newline delimited json file, add the `--save_dupes` flag.
+eg `python minhash_lsh_dedupe.py new --save_dupes`
 
 More info can be found by running `python minhash_lsh_dedupe.py --help`
 

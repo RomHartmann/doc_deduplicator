@@ -96,7 +96,7 @@ class LshDeduper(object):
             if dup:
                 duplicates.append((key, list(dup)))
 
-        logger.info("Number of minhash duplicates = {}".format(len(duplicates)))
+        logger.info("Number of minhash duplicate clusters = {}".format(len(duplicates)))
 
         return duplicates
 

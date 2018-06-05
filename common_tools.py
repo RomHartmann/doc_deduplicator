@@ -8,7 +8,6 @@ import json
 import os
 import logging
 import datetime
-import csv
 
 logging.basicConfig(level='DEBUG')
 logger = logging.getLogger(__name__)
@@ -97,12 +96,10 @@ def save_duplicate_filenames(duplicates, save_path="duplicates.json.nl"):
     :rtype: None
     """
     with open(save_path, 'w') as f:
-        writer = csv.writer(f)
-
         for head_dupe, sibling_dupes in duplicates:
             all_dupes = [head_dupe] + sibling_dupes
-            row = json.dumps(all_dupes)
-            writer.writerow(row)
+            f.write(json.dumps(all_dupes) + "\n")
+    logger.info("saved duplicates to '{}'".format(save_path))
 
 
 def create_ngrams(text, word_ngram=3):
