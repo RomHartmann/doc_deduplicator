@@ -4,6 +4,9 @@ Two articles are considered duplicate if they are similarly written; i.e. plagar
 Two articles are not considered duplicates if they discuss the same event, but written independently and uniquely.
 
 These methods here are less efficient than the minhash in time.
+
+Nice resource:
+    https://mattilyra.github.io/2017/05/23/document-deduplication-with-lsh.html
 """
 import logging
 
