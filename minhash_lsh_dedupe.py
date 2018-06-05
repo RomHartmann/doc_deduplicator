@@ -5,9 +5,11 @@ https://ekzhu.github.io/datasketch/lsh.html
 Two articles are considered duplicate if they are similarly written; i.e. plagarized.
 Two articles are not considered duplicates if they discuss the same event, but written independently and uniquely.
 """
+import os
 import logging
 import pickle
 import datetime
+import argparse
 
 import redis
 import datasketch
@@ -20,15 +22,17 @@ logger = logging.getLogger(__name__)
 
 class LshDeduper(object):
 
-    def __init__(self, file_dir="news_data", redis_host="localhost", redis_port=6379):
-        """
+    def __init__(self, data_dir="news_data", redis_host="localhost", redis_port=6379):
+        """Instantiate the deduper object.
 
-        :param redis_host:
-        :type redis_host:
-        :param redis_port:
-        :type redis_port:
+        :param data_dir: The
+        :type data_dir: str
+        :param redis_host: The hostname of the redis server
+        :type redis_host: str
+        :param redis_port: The port number of the redis server
+        :type redis_port: int
         """
-        self.file_dir = file_dir
+        self.data_dir = data_dir
         self.redis_host = redis_host
         self.redis_port = redis_port
 
@@ -50,12 +54,12 @@ class LshDeduper(object):
         return self
 
     def create_lsh(self, threshold=0.75):
-        """
+        """Creates the LSH object into which the hashes are stored.
 
-        :param threshold:
-        :type threshold:
-        :return:
-        :rtype:
+        :param threshold: The threshold over which we consider two docs a duplicate
+        :type threshold: float
+        :return: Returning self so that we can chain commands together.
+        :rtype: LshDeduper
         """
         logger.info("creating minhash lsh object with threshold = {}".format(threshold))
         self.lsh = datasketch.MinHashLSH(
@@ -69,15 +73,15 @@ class LshDeduper(object):
         return self
 
     def build_lsh(self, permutations=128):
-        """
+        """Buld the LSH object up by injecting the minhashes into it.
 
-        :param permutations:
-        :type permutations:
-        :return:
-        :rtype:
+        :param permutations: Number of permutations to use for minhashing.
+        :type permutations: int
+        :return: Returning self so that we can chain commands together.
+        :rtype: LshDeduper
         """
         logger.info("Building minhashes")
-        for doc in common_tools.parse_data(self.file_dir):
+        for doc in common_tools.parse_data(self.data_dir):
             mh = datasketch.MinHash(num_perm=permutations)
             word_set = set([s.encode('utf-8') for s in doc["content"].split()])
             for word in word_set:
@@ -91,13 +95,19 @@ class LshDeduper(object):
         return self
 
     def store_lsh(self, model_location="lsh_model.pkl"):
-        """
+        """Store the LSH instructions as a pickle file in order to read model later.
 
-        :return:
-        :rtype:
+        :param model_location: The location of the pickle file.
+        :type model_location: str
+        :return: Returning self so that we can chain commands together.
+        :rtype: LshDeduper
         """
         if self.lsh is None:
             raise Exception("self.lsh is None.  First build_lsh or load_lsh")
+
+        if os.path.isfile(model_location):
+            logger.debug("removing old file")
+            os.remove(model_location)
 
         logger.info("Writing lsh model to '{}'".format(model_location))
         with open(model_location, 'wb') as f_lsh:
@@ -105,10 +115,14 @@ class LshDeduper(object):
         return self
 
     def load_lsh(self, model_location="lsh_model.pkl"):
-        """
+        """Load an existing LSH model instructions from a pickle file.  Requires model to be in redis.
 
-        :return:
-        :rtype:
+        The pickle file does not contain the model, but is necessary to load the model from redis.
+
+        :param model_location: The location of the pickle file.
+        :type model_location: str
+        :return: Returning self so that we can chain commands together.
+        :rtype: LshDeduper
         """
         logger.info("Fetching lsh model from '{}'".format(model_location))
         with open(model_location, 'rb') as f_lsh:
@@ -136,15 +150,29 @@ class LshDeduper(object):
 
 if __name__ == '__main__':
     begin = datetime.datetime.now()
+    parser = argparse.ArgumentParser()
 
-    # To build the model and store it into redis
-    # deduper = LshDeduper()
-    # dupes = deduper.clear_redis_db().create_lsh().build_lsh().calculate_duplicates()
-    # deduper.store_lsh()
+    parser.add_argument(
+        'mode', help="Which mode to run deduper.  new: Create new model.  load:  load existing lsh mode.",
+        choices=['new', 'load']
+    )
+    parser.add_argument(
+        '--model_path', help="That path where to save the LSH model.  Default = 'lsh_model.pkl'",
+        default="lsh_model.pkl"
+    )
+    args = parser.parse_args()
 
-    # To load the model from redis
-    deduper = LshDeduper()
-    dupes = deduper.load_lsh().build_lsh().calculate_duplicates()
+    model_path = args.model_path
+
+    if args.mode == "new":
+        # To build the model and store it into redis
+        deduper = LshDeduper()
+        dupes = deduper.clear_redis_db().create_lsh().build_lsh().calculate_duplicates()
+        deduper.store_lsh(model_path)
+    elif args.mode == "load":
+        # To load the model from redis
+        deduper = LshDeduper()
+        dupes = deduper.load_lsh(model_path).build_lsh().calculate_duplicates()
 
     elapsed = datetime.datetime.now() - begin
     logger.debug("time taken to complete = {}".format(elapsed))
