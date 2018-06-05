@@ -1,5 +1,4 @@
-*.json
-news_data/*
+
 *.pyc
 lsh_model.pkl
 *.pkl
