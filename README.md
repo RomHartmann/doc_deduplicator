@@ -1,8 +1,8 @@
 # Document deduplicator
 
-### Methodology
+An investigation of how to deduplicate documents in parallel
 
-I went down a bit of a rabbit hole on this one.
+### Methodology
 
 My first idea was to implement a jaccard scoring on a word-based ngram.
 Found out that it takes way too long, and I couldn't figure out an elegant pipeline that
